@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-//#include "FunctionLib.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Storage.generated.h"
 
 UENUM(BlueprintType)
@@ -15,8 +15,12 @@ enum class ELimit : uint8
 	Fifty UMETA(DisplayName = "50"),
 	OneHundred UMETA(DisplayName = "100"),
 	TwoHundredFifty UMETA(DisplayName = "250"),
-	FiveHundred UMETA(DisplayName = "500")
+	FiveHundred UMETA(DisplayName = "500"),
+
+	Enum_MAX UMETA(Hidden)
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLoaderInteraction,bool, Add, FString, LoaderName);
 
 UCLASS()
 class VEOMTEST_API AStorage : public AActor
@@ -26,6 +30,8 @@ class VEOMTEST_API AStorage : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AStorage();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+	class UStaticMeshComponent* MeshComponent;
 
 protected:
 	// Called when the game starts or when spawned
@@ -39,7 +45,7 @@ public:
 	int32 _resourceCount;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
 	int32 _reservedResourceCount;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource", meta = (ExposeOnSpawn = true))
 	ELimit _resourceLimit;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tasks")
@@ -49,11 +55,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tasks")
 	TMap<FString, int32> _loadersWhoWantToTake;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager", meta = (ExposeOnSpawn = true))
 	bool _inSystem;
 
-	UFUNCTION(BlueprintCallable, Category = "Resource")
-	int GetLimit();
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnLoaderInteraction OnLoaderInteraction;
+
+	UFUNCTION(BlueprintPure, Category = "Resource")
+	int GetLimit() const;
 	UFUNCTION(BlueprintCallable, Category = "Random")
 	void SetRandLimit();
 	UFUNCTION(BlueprintCallable, Category = "Random")
@@ -64,7 +73,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LoaderInteraction")
 	void GiveResourceToLoader(int32 Count);
 	UFUNCTION(BlueprintCallable, Category = "LoaderInteraction")
-	void GetResourceToLoader(int32 Count);
+	void GetResourceFromLoader(int32 Count);
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 	void OnBeTaskAim(bool Add, FString LoaderName, bool WantToTake, int32 TaskResourceCount);

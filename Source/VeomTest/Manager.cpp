@@ -39,13 +39,17 @@ void AManager::CreateTask(AStorage* FirstStorage, AStorage* SecondStorage, int32
 	else
 		GiveTaskForNearestLoader(NewTask);
 	
-	FirstStorage->_reservedResourceCount = FirstStorage->_reservedResourceCount * -1 + ResourceCount;
-	FirstStorage->_reservedResourceCount = FirstStorage->_reservedResourceCount + ResourceCount;
+	FirstStorage->_reservedResourceCount = FirstStorage->_reservedResourceCount + -1 * ResourceCount;
+	SecondStorage->_reservedResourceCount = SecondStorage->_reservedResourceCount + ResourceCount;
 }
 
 void AManager::CreateTasksOfSelectedResource(int32 ResourceType, TMap<AStorage*, int32> StoragesHaveMoreThenNeed,
 	TMap<AStorage*, int32> StoragesHaveLessThenNeed)
 {
+
+	StHaveMoreThenNeed = StoragesHaveMoreThenNeed;
+	StHaveLessThenNeed = StoragesHaveLessThenNeed;
+	
 	TArray<AStorage*> StoragesWithMoreResources;
 	StoragesHaveMoreThenNeed.GetKeys(StoragesWithMoreResources);
 	TArray<AStorage*> StoragesWithLessResources;
@@ -64,7 +68,7 @@ void AManager::CreateTasksOfSelectedResource(int32 ResourceType, TMap<AStorage*,
 	TArray<AStorage*> StoragesForDistributionOfRemainder = _resource_Storage.Find(ResourceType)->_storages;;
 	int32 ResourceCounter = 0;
 
-	while (StoragesHaveMoreThenNeed.Num()-1 >= ResourceMoreCounter && StoragesHaveLessThenNeed.Num() >= ResourceLessCounter)
+	while (StoragesHaveMoreThenNeed.Num()-1 >= ResourceMoreCounter && StoragesHaveLessThenNeed.Num()-1 >= ResourceLessCounter)
 	{
 		CurrentMoreStorage = StoragesWithMoreResources[ResourceMoreCounter];
 		CurrentLessStorage = StoragesWithLessResources[ResourceLessCounter];
@@ -96,22 +100,24 @@ void AManager::CreateTasksOfSelectedResource(int32 ResourceType, TMap<AStorage*,
 	{
 		while (StoragesHaveMoreThenNeed.Num()-1 >= ResourceMoreCounter)
 		{
-			float ResourceCountForOneStorage_WholePath = 0.0f; 
-			float ResourceCountForOneStorage_FractionalPath = modf(((float)MoreResourcesCount[ResourceMoreCounter] / (float)StoragesHaveMoreThenNeed.Num()), &ResourceCountForOneStorage_WholePath) ;
 			//StoragesForDistributionOfRemainder.Remove(StoragesWithMoreResources[ResourceMoreCounter]);
 			CurrentMoreStorage = StoragesWithMoreResources[ResourceMoreCounter];
 			ResourceCounter = MoreResourcesCount[ResourceMoreCounter];
+			
+			float ResourceCountForOneStorage_WholePart = UE4::SSE::TruncToInt32((float)MoreResourcesCount[ResourceMoreCounter] / (float)StoragesForDistributionOfRemainder.Num()); //0.0f;
+			float ResourceCountForOneStorage_FractionalPart = FMath::Fmod ((float)MoreResourcesCount[ResourceMoreCounter], (float)StoragesForDistributionOfRemainder.Num());
 			for (AStorage* Storage : StoragesForDistributionOfRemainder)
 			{
 				if (Storage != CurrentMoreStorage)
 				{
 					CurrentLessStorage = Storage;
-					CurrentLessResourceCount = (ResourceCountForOneStorage_FractionalPath + 1 < StoragesForDistributionOfRemainder.Find(Storage) ) ? (ResourceCountForOneStorage_WholePath + 1) : ResourceCountForOneStorage_WholePath;
+					CurrentLessResourceCount = ResourceCountForOneStorage_FractionalPart + 1 > StoragesForDistributionOfRemainder.Find(Storage) ? (ResourceCountForOneStorage_WholePart + 1) : ResourceCountForOneStorage_WholePart;
 					if(CurrentLessResourceCount > 0)
 					{
-						if ( (((ResourceCounter - CurrentLessResourceCount) > 0) ? (ResourceCounter - CurrentLessResourceCount) : 0) > 0)
+						if ( FMath::Max(ResourceCounter - CurrentLessResourceCount, 0) > 0 )//? (ResourceCounter - CurrentLessResourceCount) : 0) > 0
 						{
-							ResourceCounter = ResourceCounter - CurrentLessResourceCount;
+							ResourceCounter = FMath::Max(ResourceCounter - CurrentLessResourceCount, 0);
+							//ResourceCounter = ResourceCounter - CurrentLessResourceCount;
 						}
 						else
 						{
@@ -137,22 +143,23 @@ void AManager::CreateTasksOfSelectedResource(int32 ResourceType, TMap<AStorage*,
 	{
 		while (StoragesHaveLessThenNeed.Num()-1 >= ResourceLessCounter)
 		{
-			float ResourceCountForOneStorage_WholePath = 0.0f; 
-			float ResourceCountForOneStorage_FractionalPath = modf(((float)LessResourcesCount[ResourceLessCounter] / (float)StoragesHaveLessThenNeed.Num()), &ResourceCountForOneStorage_WholePath) ;
-			//StoragesForDistributionOfRemainder.Remove(StoragesWithMoreResources[ResourceMoreCounter]);
 			CurrentLessStorage = StoragesWithLessResources[ResourceLessCounter];
 			ResourceCounter = LessResourcesCount[ResourceLessCounter];
+			
+			float ResourceCountForOneStorage_WholePath = UE4::SSE::TruncToInt32((float)LessResourcesCount[ResourceLessCounter] / (float)StoragesForDistributionOfRemainder.Num());
+			float ResourceCountForOneStorage_FractionalPath = FMath::Fmod((float)LessResourcesCount[ResourceLessCounter], (float)StoragesHaveLessThenNeed.Num());
+			//StoragesForDistributionOfRemainder.Remove(StoragesWithMoreResources[ResourceMoreCounter]);
 			for (AStorage* Storage : StoragesForDistributionOfRemainder)
 			{
 				if (Storage != CurrentLessStorage)
 				{
 					CurrentMoreStorage = Storage;
-					CurrentMoreResourceCount = (ResourceCountForOneStorage_FractionalPath + 1 < StoragesForDistributionOfRemainder.Find(Storage) ) ? (ResourceCountForOneStorage_WholePath + 1) : ResourceCountForOneStorage_WholePath;
+					CurrentMoreResourceCount = (ResourceCountForOneStorage_FractionalPath + 1 > StoragesForDistributionOfRemainder.Find(Storage) ) ? (ResourceCountForOneStorage_WholePath + 1) : ResourceCountForOneStorage_WholePath;
 					if(CurrentMoreResourceCount > 0)
 					{
-						if ( (((ResourceCounter - CurrentLessResourceCount) > 0) ? (ResourceCounter - CurrentLessResourceCount) : 0) > 0)
+						if ( FMath::Max(ResourceCounter - CurrentMoreResourceCount, 0) > 0)
 						{
-							ResourceCounter = ResourceCounter - CurrentLessResourceCount;
+							ResourceCounter = FMath::Max(ResourceCounter - CurrentMoreResourceCount, 0);
 						}
 						else
 						{
@@ -215,6 +222,7 @@ void AManager::RegisterLoader(ALoader* Loader)
 	Loader->OnBeBusy.AddDynamic(this,&AManager::OnLoaderBeBusy);
 	Loader->OnBeFree.AddDynamic(this,&AManager::OnLoaderBeFree);
 	OnLoadersSpeedChange.AddDynamic(Loader,&ALoader::OnLoaderSpeedChange);
+	_freeLoaders.AddUnique(Loader);
 }
 
 void AManager::OnLoaderBeBusy(ALoader* Loader)
@@ -282,7 +290,7 @@ void AManager::UpdateResourceLimitMap(AStorage* CurrentStorage, bool Add)
 {
 	int32 Multi = Add ? 1 : -1;
 	int32 Count = _resource_Limit[CurrentStorage->_resourceType] + (CurrentStorage->GetLimit() * Multi);
-	_resource_Count.Add(CurrentStorage->_resourceType, Count);
+	_resource_Limit.Add(CurrentStorage->_resourceType, Count);
 }
 
 void AManager::SetStorageSystemStatus(AStorage* CurrentStorage, bool Add)
@@ -327,12 +335,12 @@ void AManager::ChangeStorageResourceType(AStorage* CurrentStorage, int32 NewType
 
 float AManager::FindAveragePercentForResource(int32 ResourceType)
 {
-	return 0.0f;
+	return (float)_resource_Count[ResourceType]/(float)_resource_Limit[ResourceType];
 }
 
 void AManager::SetEmptyResourcesMap()
 {
-	for(int i = 1; i < 50; i++)
+	for(int i = 1; i <= 50; i++)
 	{
 		_resource_Count.Add(i,0);
 	}
@@ -341,7 +349,7 @@ void AManager::SetEmptyResourcesMap()
 void AManager::SetEmptyStoragesMap()
 {
 	FStorages Empty;
-	for(int i = 1; i < 50; i++)
+	for(int i = 1; i <= 50; i++)
 	{
 		_resource_Storage.Add(i,Empty);
 	}
@@ -349,30 +357,34 @@ void AManager::SetEmptyStoragesMap()
 
 void AManager::SetEmptyLimitsMap()
 {
-	for(int i = 1; i < 50; i++)
+	for(int i = 1; i <= 50; i++)
 	{
 		_resource_Limit.Add(i,0);
 	}
 }
 
-void AManager::ManageSelectedResource(int32 ResourceType, AStorage* IgnorStorage)
+void AManager::ManageSelectedResource(const int32 ResourceType, AStorage* IgnoreStorage)
 {
-	float Percent =  FindAveragePercentForResource(ResourceType);
+	float const Percent =  FindAveragePercentForResource(ResourceType);
 	TMap<AStorage*, int32> StoragesHaveMoreThenNeed;
 	TMap<AStorage*, int32> StoragesHaveLessThenNeed;
 	
 	for (AStorage* Storage : _resource_Storage[ResourceType]._storages)
 	{
-		if (!FMath::IsNearlyEqual((float)(Storage->_resourceCount + Storage->_reservedResourceCount),(Percent * (float)Storage->GetLimit()), 2.0f))
+		if (!FMath::IsNearlyEqual((float)(Storage->_resourceCount + Storage->_reservedResourceCount),Percent * (float)Storage->GetLimit(), 2.0f))
 		{
-			if ((float)(Storage->_resourceCount + Storage->_reservedResourceCount) > (Percent * (float)Storage->GetLimit()))
+			if ((float)(Storage->_resourceCount + Storage->_reservedResourceCount) > Percent * (float)Storage->GetLimit())
 			{
 				StoragesHaveMoreThenNeed.Add(Storage, (int32)abs((float)(Storage->_resourceCount + Storage->_reservedResourceCount)-(Percent * (float)Storage->GetLimit())));
 			}
-			else if(IgnorStorage && Storage!=IgnorStorage)
+			else
 			{
-				StoragesHaveLessThenNeed.Add(Storage, (int32)abs((float)(Storage->_resourceCount + Storage->_reservedResourceCount)-(Percent * (float)Storage->GetLimit())));
+				if(!(IgnoreStorage!=nullptr && Storage==IgnoreStorage))
+				{
+					StoragesHaveLessThenNeed.Add(Storage, (int32)abs((float)(Storage->_resourceCount + Storage->_reservedResourceCount)-(Percent * (float)Storage->GetLimit())));
+				}
 			}
+				
 		}
 	}
 	CreateTasksOfSelectedResource(ResourceType, StoragesHaveMoreThenNeed, StoragesHaveLessThenNeed);

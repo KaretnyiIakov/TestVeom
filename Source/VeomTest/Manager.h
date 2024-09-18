@@ -34,6 +34,11 @@ public:
 	TArray<ALoader*> _freeLoaders;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Storage")
 	TArray<AStorage*> _outSystemStorages;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
+	TMap<AStorage*, int32> StHaveMoreThenNeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
+	TMap<AStorage*, int32> StHaveLessThenNeed;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -79,7 +84,7 @@ public:
 	void ChangeStorageResourceType(AStorage* CurrentStorage, int32 NewType);
 	
 	UFUNCTION(BlueprintCallable, Category= "Resource")
-	void ManageSelectedResource(int32 ResourceType, AStorage* IgnorStorage);
+	void ManageSelectedResource(int32 ResourceType, AStorage* IgnoreStorage);
 	UFUNCTION(BlueprintCallable, Category= "Resource")
 	float FindAveragePercentForResource(int32 ResourceType);
 

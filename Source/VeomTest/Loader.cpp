@@ -3,6 +3,7 @@
 
 #include "Loader.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "GameFramework/FloatingPawnMovement.h"
 
 // Sets default values
@@ -44,11 +45,11 @@ void ALoader::GetTask(FTask Task)
 
 	if (_task._firstStorage != nullptr)
 	{
-		_task._firstStorage->OnBeTaskAim(true, *this->GetName().RightChop(3), true, _task._resourceCount);
+		_task._firstStorage->OnBeTaskAim(true, this->GetActorLabel().RightChop(3), true, _task._resourceCount);
 	}
 	if (_task._secondStorage != nullptr)
 	{
-		_task._secondStorage->OnBeTaskAim(true, *this->GetName().RightChop(3), false, _task._resourceCount);
+		_task._secondStorage->OnBeTaskAim(true, this->GetActorLabel().RightChop(3), false, _task._resourceCount);
 	}
 }
 
@@ -56,6 +57,8 @@ void ALoader::EndTask()
 {
 	_isBusy = false;
 	UFunctionLib::ClearTask(_task);
+	_firstStorageIsVisited = false;
+	_secondStorageIsVisited = false;
 	OnBeFree.Broadcast(this);
 }
 

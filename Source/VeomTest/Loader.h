@@ -18,9 +18,10 @@ class VEOMTEST_API ALoader : public APawn
 {
 	GENERATED_BODY()
 	
-private:
-	UPROPERTY(VisibleAnywhere)
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	class UFloatingPawnMovement* MovementComponent;
+private:
 
 	UPROPERTY(VisibleAnywhere)
 	class UStaticMeshComponent* MeshComponent;
