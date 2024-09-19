@@ -3,6 +3,8 @@
 
 #include "Storage.h"
 
+
+int32 AStorage::_storageCounter = 0;
 // Sets default values
 AStorage::AStorage()
 {
@@ -17,7 +19,7 @@ AStorage::AStorage()
 void AStorage::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	RenameStorage();
 }
 
 int AStorage::GetLimit() const
@@ -71,19 +73,29 @@ void AStorage::GetResourceFromLoader(int32 Count)
 
 void AStorage::OnBeTaskAim(bool Add, FString LoaderName, bool WantToTake, int32 TaskResourceCount)
 {
-	_taskCounter = (Add ? 1 : -1) + _taskCounter;
+	//_taskCounter += (Add ? 1 : -1);
 	
 	if (Add)
+	{
 		(WantToTake ? _loadersWhoWantToTake : _loadersWhoWantToPut ).Add(LoaderName, TaskResourceCount);
+	}
 	else
+	{
+		TaskCounterUpdate(false);
 		(WantToTake ? _loadersWhoWantToTake : _loadersWhoWantToPut ).Remove(LoaderName);
-
+	}
 	OnLoaderInteraction.Broadcast(Add,LoaderName);
 }
 
-void AStorage::RegisterInManager()
+void AStorage::TaskCounterUpdate(bool Up)
 {
+	_taskCounter += (Up ? 1 : -1);
+}
 
+void AStorage::RenameStorage()
+{
+	IncrementCounter();
+	this->Rename(*FString::Printf(TEXT("Storage_%d"), _storageCounter));
 }
 
 // Called every frame
@@ -91,5 +103,14 @@ void AStorage::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AStorage::IncrementCounter()
+{
+	_storageCounter++;
+	if (_storageCounter > 2000)
+	{
+		_storageCounter = 0;
+	}
 }
 

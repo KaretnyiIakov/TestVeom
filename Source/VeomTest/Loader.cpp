@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/FloatingPawnMovement.h"
 
+int32 ALoader::_loaderCounter = 0;
 // Sets default values
 ALoader::ALoader()
 {
@@ -26,7 +27,7 @@ ALoader::ALoader()
 void ALoader::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	RenameLoader();
 }
 
 // Called every frame
@@ -45,11 +46,11 @@ void ALoader::GetTask(FTask Task)
 
 	if (_task._firstStorage != nullptr)
 	{
-		_task._firstStorage->OnBeTaskAim(true, this->GetActorLabel().RightChop(3), true, _task._resourceCount);
+		_task._firstStorage->OnBeTaskAim(true, this->GetName(), true, _task._resourceCount); //.RightChop(3)
 	}
 	if (_task._secondStorage != nullptr)
 	{
-		_task._secondStorage->OnBeTaskAim(true, this->GetActorLabel().RightChop(3), false, _task._resourceCount);
+		_task._secondStorage->OnBeTaskAim(true, this->GetName(), false, _task._resourceCount);
 	}
 }
 
@@ -60,6 +61,21 @@ void ALoader::EndTask()
 	_firstStorageIsVisited = false;
 	_secondStorageIsVisited = false;
 	OnBeFree.Broadcast(this);
+}
+
+void ALoader::IncrementCounter()
+{
+	_loaderCounter++;
+	if (_loaderCounter > 2000)
+	{
+		_loaderCounter = 0;
+	}
+}
+
+void ALoader::RenameLoader()
+{
+	IncrementCounter();
+	this->Rename(*FString::Printf(TEXT("Loader_%d"), _loaderCounter));
 }
 
 

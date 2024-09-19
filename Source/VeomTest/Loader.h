@@ -26,10 +26,12 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UStaticMeshComponent* MeshComponent;
 
+private:
+	static int32 _loaderCounter;
 public:	
 	// Sets default values for this actor's properties
 	ALoader();
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task")
 	bool _isBusy;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task")
@@ -67,6 +69,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement")
 	void OnLoaderSpeedChange(ESpeed Speed);
 
+private:
+	static void IncrementCounter();
+	void RenameLoader();
 	
 	
 };

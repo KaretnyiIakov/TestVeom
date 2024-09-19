@@ -35,10 +35,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Storage")
 	TArray<AStorage*> _outSystemStorages;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-	TMap<AStorage*, int32> StHaveMoreThenNeed;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-	TMap<AStorage*, int32> StHaveLessThenNeed;
+
 	
 protected:
 	// Called when the game starts or when spawned
@@ -66,6 +63,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category= "Loader")
 	void ChangeLoadersSpeed(ESpeed Speed);
 
+	UFUNCTION(BlueprintCallable, Category= "Loader")
+	void RegisterStorage(AStorage* Storage);
 	UFUNCTION(BlueprintCallable, Category= "Storage")
 	void UpdateMapsForAllStorages();
 	UFUNCTION(BlueprintCallable, Category= "Storage")

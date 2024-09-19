@@ -37,8 +37,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+private:
+	static int32 _storageCounter;
 public:	
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
 	int32 _resourceType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
@@ -77,10 +79,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 	void OnBeTaskAim(bool Add, FString LoaderName, bool WantToTake, int32 TaskResourceCount);
-	UFUNCTION(BlueprintCallable, Category = "Manager")
-	void RegisterInManager();
+	UFUNCTION(BlueprintCallable, Category = "Task")
+	void TaskCounterUpdate(bool Up);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+private:
+	static void IncrementCounter();
+	void RenameStorage();
 };
