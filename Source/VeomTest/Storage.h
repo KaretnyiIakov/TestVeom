@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Storage.generated.h"
 
+// Enum with limit variants
 UENUM(BlueprintType)
 enum class ELimit : uint8
 {
@@ -30,6 +30,7 @@ class VEOMTEST_API AStorage : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AStorage();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	class UStaticMeshComponent* MeshComponent;
 
@@ -38,33 +39,40 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	// Counter for the number of storages, used in naming
 	static int32 _storageCounter;
+	
 public:	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
-	int32 _resourceType;
+	int32 ResourceType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
-	int32 _resourceCount;
+	int32 ResourceCount;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
-	int32 _reservedResourceCount;
+	int32 ReservedResourceCount;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource", meta = (ExposeOnSpawn = true))
-	ELimit _resourceLimit;
+	ELimit ResourceLimit;
 
+	// Task counter and loader aim info to visualize in UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tasks")
-	int32 _taskCounter;
+	int32 TaskCounter;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tasks")
-	TMap<FString, int32> _loadersWhoWantToPut;
+	TMap<FString, int32> WantToPutLoaders;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tasks")
-	TMap<FString, int32> _loadersWhoWantToTake;
+	TMap<FString, int32> WantToTakeLoaders;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager", meta = (ExposeOnSpawn = true))
-	bool _inSystem;
+	bool bInSystem;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnLoaderInteraction OnLoaderInteraction;
 
+	// Return limit enum property as int value
 	UFUNCTION(BlueprintPure, Category = "Resource")
 	int GetLimit() const;
+
+	// Set random parameters function, called on start game
+	
 	UFUNCTION(BlueprintCallable, Category = "Random")
 	void SetRandLimit();
 	UFUNCTION(BlueprintCallable, Category = "Random")
@@ -77,14 +85,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LoaderInteraction")
 	void GetResourceFromLoader(int32 Count);
 
+	// Marks the storage as a loader task target
 	UFUNCTION(BlueprintCallable, Category = "Task")
 	void OnBeTaskAim(bool Add, FString LoaderName, bool WantToTake, int32 TaskResourceCount);
+	// Count Task related to this storage
 	UFUNCTION(BlueprintCallable, Category = "Task")
 	void TaskCounterUpdate(bool Up);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
 private:
+	// Function used for naming storages (only for cosmetic)
 	static void IncrementCounter();
+	// Function used for naming storages (only for cosmetic)
 	void RenameStorage();
 };
